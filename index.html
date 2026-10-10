@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ComLab Access Monitor - ERCIHS CSS Laboratory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0b132b;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- ================= AUTH SCREEN ================= -->
+  <div id="auth-screen" class="fixed inset-0 flex items-center justify-center bg-slate-950/90 backdrop-blur-md z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl text-center relative">
+      
+      <span class="bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-3">
+        ERCIHS CSS Laboratory
+      </span>
+      
+      <h2 class="text-2xl font-bold text-white mb-1">ComLab Access Monitor</h2>
+      <p class="text-slate-400 text-sm mb-6">Authorized Teacher & Staff Portal</p>
+
+      <!-- Auth Tab Switcher -->
+      <div class="flex border-b border-slate-800 mb-6 relative z-20">
+        <button id="tab-login" type="button" onclick="switchAuthTab('login')" class="flex-1 py-2 font-semibold text-blue-400 border-b-2 border-blue-500 transition-colors cursor-pointer">
+          Log In
+        </button>
+        <button id="tab-signup" type="button" onclick="switchAuthTab('signup')" class="flex-1 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition-colors cursor-pointer">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Log In Form -->
+      <div id="loginSection" class="relative">
+        <!-- Lockout Overlay when no accounts exist -->
+        <div id="loginLockout" class="hidden absolute inset-0 bg-slate-900/95 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4 rounded-xl text-center">
+          <p class="text-amber-400 font-bold text-sm mb-1">No Accounts Registered!</p>
+          <p class="text-slate-400 text-xs mb-4">You must create an account first before you can log in to access the ComLab.</p>
+          <button type="button" onclick="switchAuthTab('signup')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors shadow-md">
+            Go to Create Account
+          </button>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Username / DepEd Email</label>
+            <input type="text" id="loginUser" required placeholder="teacher_admin" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+            <input type="password" id="loginPass" required placeholder="••••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors" />
+          </div>
+          <button type="submit" id="loginBtn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-blue-600/20">
+            Sign In to Dashboard
+          </button>
+        </form>
+      </div>
+
+      <!-- Create Account Form -->
+      <form id="signupForm" onsubmit="handleSignUp(event)" class="space-y-4 text-left hidden">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Username / DepEd Email</label>
+          <input type="text" id="signupUser" required placeholder="new_teacher" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+          <input type="password" id="signupPass" required placeholder="••••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors" />
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-emerald-600/20">
+          Create Account
+        </button>
+      </form>
+
+      <div id="statusMsg" class="text-xs mt-4 h-4 font-medium"></div>
+
+      <div class="mt-6 text-xs text-slate-500 pt-4 border-t border-slate-800">
+        Connected Router Gateway: <span class="font-mono text-slate-400">192.168.1.1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN DASHBOARD ================= -->
+  <div id="dashboard" class="hidden flex-1 flex flex-col">
+    <!-- Header Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+        <h1 class="text-xl font-bold tracking-tight">ComLab Access Monitor</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span id="activeUserDisplay" class="text-sm text-slate-400 font-mono">User: None</span>
+        <button onclick="logout()" class="px-3 py-1.5 text-xs bg-red-950/60 border border-red-800/50 text-red-400 rounded-md hover:bg-red-900/60 transition-colors">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+      
+      <!-- Action Toolbar -->
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-200">Terminal Devices Grid</h2>
+        <div class="flex space-x-3">
+          <button onclick="openRestrictionsModal()" class="px-4 py-2 bg-red-900/40 hover:bg-red-800/50 border border-red-700/50 text-red-300 font-medium text-sm rounded-lg transition-colors flex items-center gap-2">
+            <span>🚫 Manage Restricted URLs</span>
+          </button>
+          <button onclick="openModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm rounded-lg transition-colors shadow-lg shadow-blue-600/20 flex items-center gap-2">
+            <span>+ Add Terminal</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Terminals Grid -->
+      <div id="pc-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Cards generated dynamically or loaded from memory -->
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= ADD TERMINAL MODAL ================= -->
+  <div id="addModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+      <h3 class="text-lg font-bold text-white mb-4">Add Terminal Device</h3>
+      <form onsubmit="addTerminal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">PC Designation</label>
+          <input type="text" id="pc-name" required placeholder="e.g. PC-01" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">IP Address</label>
+          <input type="text" id="pc-ip" required placeholder="e.g. 192.168.1.101" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Active Site / App</label>
+          <input type="text" id="pc-site" placeholder="e.g. facebook.com/watch or VS Code" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500" />
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-medium rounded-lg hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-500">Save Terminal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= RESTRICTED URLS MODAL ================= -->
+  <div id="restrictedModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <h3 class="text-lg font-bold text-white mb-2">Restrict URLs for All PCs</h3>
+      <p class="text-xs text-slate-400 mb-4">Any terminal running an app or site matching these links will be automatically blocked.</p>
+      
+      <!-- Add Rule Input -->
+      <form onsubmit="addRestrictedUrl(event)" class="flex gap-2 mb-4">
+        <input type="text" id="new-restricted-url" required placeholder="e.g. facebook.com, youtube.com" class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-red-500" />
+        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg transition-colors">Add Link</button>
+      </form>
+
+      <!-- Active Restricted Rules List -->
+      <div class="mb-4">
+        <span class="text-xs font-bold text-slate-300 mb-2 block">Active Blocklist:</span>
+        <div id="restricted-urls-list" class="max-h-40 overflow-y-auto space-y-2 pr-1">
+          <!-- Dynamically populated restricted links -->
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeRestrictionsModal()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-medium rounded-lg hover:bg-slate-700">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT ================= -->
+  <script>
+    // Initial Default Terminals if none exist
+    const defaultTerminals = [
+      { id: '1', name: 'PC-01', ip: '192.168.1.101', site: 'VS Code - main.js' },
+      { id: '2', name: 'PC-02', ip: '192.168.1.102', site: 'facebook.com/watch' },
+      { id: '3', name: 'PC 1', ip: '192.168.1.1', site: 'No Active Session' }
+    ];
+
+    // Initial Default Restricted URLs
+    const defaultRestrictions = ['facebook.com', 'tiktok.com', 'youtube.com'];
+
+    // Retrieve storage data
+    function getTerminals() {
+      return JSON.parse(localStorage.getItem('comlab_terminals')) || defaultTerminals;
+    }
+
+    function getRestrictedUrls() {
+      return JSON.parse(localStorage.getItem('comlab_restricted_urls')) || defaultRestrictions;
+    }
+
+    // Save terminal updates and re-render grid
+    function saveTerminals(terminals) {
+      localStorage.setItem('comlab_terminals', JSON.stringify(terminals));
+      renderTerminals();
+    }
+
+    function saveRestrictedUrls(urls) {
+      localStorage.setItem('comlab_restricted_urls', JSON.stringify(urls));
+      renderTerminals();
+      renderRestrictedList();
+    }
+
+    // Check if site matches blocked keywords
+    function isSiteRestricted(site) {
+      if (!site) return false;
+      const restrictedList = getRestrictedUrls();
+      return restrictedList.some(url => site.toLowerCase().includes(url.toLowerCase()));
+    }
+
+    // Render Terminals Grid
+    function renderTerminals() {
+      const grid = document.getElementById('pc-grid');
+      const terminals = getTerminals();
+      grid.innerHTML = '';
+
+      terminals.forEach(pc => {
+        const isBlocked = isSiteRestricted(pc.site);
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-md';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-bold text-sm text-white">${pc.name}</span>
+            <span class="text-[10px] font-mono text-slate-500">${pc.ip}</span>
+          </div>
+          <div class="text-xs text-slate-400 mb-1">Active App / Site:</div>
+          <div class="text-xs font-mono p-2 rounded border ${
+            isBlocked 
+              ? 'bg-red-950/40 text-red-400 border-red-900/50' 
+              : 'bg-slate-950 text-emerald-400 border-slate-800'
+          }">
+            ${pc.site || 'No Active Session'}
+          </div>
+          <div class="flex items-center justify-between text-[11px] mt-3">
+            <span class="${isBlocked ? 'text-red-400 font-semibold' : 'text-emerald-400 font-semibold'}">
+              ${isBlocked ? 'WARNING: Restricted' : 'STATUS: Normal'}
+            </span>
+            <span class="${isBlocked ? 'text-red-500 animate-pulse font-medium' : 'text-slate-500'}">
+              ${isBlocked ? '● Blocked' : 'Online'}
+            </span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Restricted URLs List Management
+    function renderRestrictedList() {
+      const listContainer = document.getElementById('restricted-urls-list');
+      const urls = getRestrictedUrls();
+      listContainer.innerHTML = '';
+
+      if (urls.length === 0) {
+        listContainer.innerHTML = `<span class="text-xs text-slate-500 italic">No URLs currently restricted.</span>`;
+        return;
+      }
+
+      urls.forEach((url, index) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between bg-slate-950 border border-slate-800 px-3 py-2 rounded-lg text-xs font-mono text-slate-300';
+        item.innerHTML = `
+          <span>${url}</span>
+          <button onclick="removeRestrictedUrl(${index})" class="text-red-400 hover:text-red-300 font-bold px-1">✕</button>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+
+    function addRestrictedUrl(e) {
+      e.preventDefault();
+      const input = document.getElementById('new-restricted-url');
+      const url = input.value.trim().toLowerCase();
+
+      if (url) {
+        let urls = getRestrictedUrls();
+        if (!urls.includes(url)) {
+          urls.push(url);
+          saveRestrictedUrls(urls);
+        }
+        input.value = '';
+      }
+    }
+
+    function removeRestrictedUrl(index) {
+      let urls = getRestrictedUrls();
+      urls.splice(index, 1);
+      saveRestrictedUrls(urls);
+    }
+
+    // Authentication Logic
+    function checkRegisteredAccounts() {
+      const users = JSON.parse(localStorage.getItem('comlab_users')) || {};
+      const hasAccounts = Object.keys(users).length > 0;
+      
+      const lockout = document.getElementById('loginLockout');
+      const loginUser = document.getElementById('loginUser');
+      const loginPass = document.getElementById('loginPass');
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (!hasAccounts) {
+        lockout.classList.remove('hidden');
+        loginUser.disabled = true;
+        loginPass.disabled = true;
+        loginBtn.disabled = true;
+      } else {
+        lockout.classList.add('hidden');
+        loginUser.disabled = false;
+        loginPass.disabled = false;
+        loginBtn.disabled = false;
+      }
+    }
+
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const tabLogin = document.getElementById('tab-login');
+      const tabSignup = document.getElementById('tab-signup');
+      const statusMsg = document.getElementById('statusMsg');
+
+      statusMsg.innerText = '';
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        tabLogin.className = 'flex-1 py-2 font-semibold text-blue-400 border-b-2 border-blue-500 transition-colors cursor-pointer';
+        tabSignup.className = 'flex-1 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition-colors cursor-pointer';
+        checkRegisteredAccounts();
+      } else {
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        tabSignup.className = 'flex-1 py-2 font-semibold text-emerald-400 border-b-2 border-emerald-500 transition-colors cursor-pointer';
+        tabLogin.className = 'flex-1 py-2 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition-colors cursor-pointer';
+      }
+    }
+
+    function handleSignUp(e) {
+      e.preventDefault();
+      const user = document.getElementById('signupUser').value.trim();
+      const pass = document.getElementById('signupPass').value.trim();
+      const statusMsg = document.getElementById('statusMsg');
+
+      let users = JSON.parse(localStorage.getItem('comlab_users')) || {};
+
+      if (users[user]) {
+        statusMsg.className = 'text-xs mt-4 font-medium text-red-400';
+        statusMsg.innerText = 'Account already exists!';
+        return;
+      }
+
+      users[user] = pass;
+      localStorage.setItem('comlab_users', JSON.stringify(users));
+
+      statusMsg.className = 'text-xs mt-4 font-medium text-emerald-400';
+      statusMsg.innerText = 'Account created! Unlocking login page...';
+
+      setTimeout(() => {
+        document.getElementById('signupUser').value = '';
+        document.getElementById('signupPass').value = '';
+        switchAuthTab('login');
+        document.getElementById('loginUser').value = user;
+      }, 1200);
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      const statusMsg = document.getElementById('statusMsg');
+
+      let users = JSON.parse(localStorage.getItem('comlab_users')) || {};
+
+      if (users[user] && users[user] === pass) {
+        localStorage.setItem('activeSession', user);
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('activeUserDisplay').innerText = 'User: ' + user;
+        renderTerminals();
+      } else {
+        statusMsg.className = 'text-xs mt-4 font-medium text-red-400';
+        statusMsg.innerText = 'Invalid username or password!';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const activeUser = localStorage.getItem('activeSession');
+      if (activeUser) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('activeUserDisplay').innerText = 'User: ' + activeUser;
+        renderTerminals();
+      } else {
+        checkRegisteredAccounts();
+      }
+    });
+
+    function logout() {
+      localStorage.removeItem('activeSession');
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      switchAuthTab('login');
+    }
+
+    // Modal Control Functions
+    function openModal() {
+      document.getElementById('addModal').classList.remove('hidden');
+      document.getElementById('addModal').classList.add('flex');
+    }
+
+    function closeModal() {
+      document.getElementById('addModal').classList.add('hidden');
+      document.getElementById('addModal').classList.remove('flex');
+    }
+
+    function openRestrictionsModal() {
+      renderRestrictedList();
+      document.getElementById('restrictedModal').classList.remove('hidden');
+      document.getElementById('restrictedModal').classList.add('flex');
+    }
+
+    function closeRestrictionsModal() {
+      document.getElementById('restrictedModal').classList.add('hidden');
+      document.getElementById('restrictedModal').classList.remove('flex');
+    }
+
+    // Add Terminal Function
+    function addTerminal(e) {
+      e.preventDefault();
+      const pcName = document.getElementById('pc-name').value.trim();
+      const pcIp = document.getElementById('pc-ip').value.trim();
+      const pcSite = document.getElementById('pc-site').value.trim() || 'No Active Session';
+
+      let terminals = getTerminals();
+      terminals.push({
+        id: Date.now().toString(),
+        name: pcName,
+        ip: pcIp,
+        site: pcSite
+      });
+
+      saveTerminals(terminals);
+      closeModal();
+      document.getElementById('pc-name').value = '';
+      document.getElementById('pc-ip').value = '';
+      document.getElementById('pc-site').value = '';
+    }
+  </script>
+</body>
+</html>

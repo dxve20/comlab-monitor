@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERCIHS ComLab Terminal Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
+
+  <!-- AUTHENTICATION SCREEN (LOGIN / REGISTER) -->
+  <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 p-4">
+    <div class="glass border border-slate-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+      <div class="text-center mb-6">
+        <span class="bg-blue-600/20 text-blue-400 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30">ERCIHS CSS Laboratory</span>
+        <h1 class="text-2xl font-bold mt-3 text-white">ComLab Access Monitor</h1>
+        <p class="text-slate-400 text-sm mt-1">Authorized Teacher & Staff Portal</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" onsubmit="handleAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Username / DepEd Email</label>
+          <input type="text" id="username" required placeholder="teacher_admin" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg transition text-sm">Sign In to Dashboard</button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-slate-800/80 text-center text-xs text-slate-500">
+        Connected Router Gateway: <span class="text-slate-300 font-mono">192.168.1.1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN TEACHER DASHBOARD -->
+  <div id="dashboard" class="hidden min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></div>
+        <h1 class="font-semibold text-lg text-white">ERCIHS ComLab Control Panel</h1>
+        <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Server IP: 192.168.1.100</span>
+      </div>
+      <button onclick="logout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded transition">Logout</button>
+    </header>
+
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      
+      <!-- LEFT COLUMN: CONTROLS & MANAGEMENT -->
+      <div class="space-y-6">
+        
+        <!-- Add Terminal Form -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <span>💻</span> Add Laboratory PC Terminal
+          </h2>
+          <form onsubmit="addTerminal(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Terminal ID</label>
+              <input type="text" id="pc-name" required placeholder="PC-01" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Static Local IP Address</label>
+              <input type="text" id="pc-ip" required placeholder="192.168.1.101" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium py-2 rounded transition">+ Add PC to Network</button>
+          </form>
+        </div>
+
+        <!-- Add Restricted Website -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <span>🚫</span> Restricted Links & Keywords
+          </h2>
+          <form onsubmit="addRestriction(event)" class="flex gap-2 mb-3">
+            <input type="text" id="restricted-url" required placeholder="e.g. facebook.com, roblox" class="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            <button type="submit" class="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-2 rounded font-medium transition">Block</button>
+          </form>
+
+          <div id="restricted-tags" class="flex flex-wrap gap-2">
+            <span class="bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+              facebook.com <button onclick="this.parentElement.remove()" class="hover:text-white">×</button>
+            </span>
+            <span class="bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+              roblox.com <button onclick="this.parentElement.remove()" class="hover:text-white">×</button>
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: LIVE TERMINAL MONITOR GRID -->
+      <div class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span>🖥️</span> Live ComLab Terminal Activity (<span id="pc-count">2</span> Connected)
+          </h2>
+          <div class="flex items-center gap-4 text-xs text-slate-400">
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Active</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Restricted Site Opened</span>
+          </div>
+        </div>
+
+        <div id="terminal-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- PC-01 Card -->
+          <div class="bg-slate-950 border border-slate-800 rounded-lg p-4 relative">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-sm text-white">PC-01</span>
+              <span class="text-[10px] font-mono text-slate-500">192.168.1.101</span>
+            </div>
+            <div class="text-xs text-slate-400 mb-1">Active App / Site:</div>
+            <div class="text-xs font-mono bg-slate-900 p-2 rounded text-emerald-400 border border-slate-800 truncate mb-3">
+              Google Classroom - Module 2
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span>Status: Safe</span>
+              <span class="text-emerald-500">● Online</span>
+            </div>
+          </div>
+
+          <!-- PC-02 Card -->
+          <div class="bg-slate-950 border border-red-500/50 rounded-lg p-4 relative">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-sm text-white">PC-02</span>
+              <span class="text-[10px] font-mono text-slate-500">192.168.1.102</span>
+            </div>
+            <div class="text-xs text-slate-400 mb-1">Active App / Site:</div>
+            <div class="text-xs font-mono bg-red-950/40 p-2 rounded text-red-400 border border-red-500/30 truncate mb-3">
+              facebook.com/watch
+            </div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-red-400 font-semibold">WARNING: Restricted</span>
+              <span class="text-red-500 animate-pulse">● Blocked</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function handleAuth(e) {
+      e.preventDefault();
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+    }
+
+    function logout() {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+    }
+
+    function addTerminal(e) {
+      e.preventDefault();
+      const name = document.getElementById('pc-name').value;
+      const ip = document.getElementById('pc-ip').value;
+      
+      const grid = document.getElementById('terminal-grid');
+      const card = document.createElement('div');
+      card.className = "bg-slate-950 border border-slate-800 rounded-lg p-4 relative";
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-bold text-sm text-white">${name}</span>
+          <span class="text-[10px] font-mono text-slate-500">${ip}</span>
+        </div>
+        <div class="text-xs text-slate-400 mb-1">Active App / Site:</div>
+        <div class="text-xs font-mono bg-slate-900 p-2 rounded text-slate-400 border border-slate-800 truncate mb-3">
+          Desktop Idle
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span>Status: Standby</span>
+          <span class="text-emerald-500">● Online</span>
+        </div>
+      `;
+      grid.appendChild(card);
+      
+      document.getElementById('pc-count').innerText = grid.children.length;
+      document.getElementById('pc-name').value = '';
+      document.getElementById('pc-ip').value = '';
+    }
+
+    function addRestriction(e) {
+      e.preventDefault();
+      const input = document.getElementById('restricted-url');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const container = document.getElementById('restricted-tags');
+      const tag = document.createElement('span');
+      tag.className = "bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-2.5 py-1 rounded-full flex items-center gap-1";
+      tag.innerHTML = `${val} <button onclick="this.parentElement.remove()" class="hover:text-white">×</button>`;
+      container.appendChild(tag);
+      input.value = '';
+    }
+  </script>
+</body>
+</html>
